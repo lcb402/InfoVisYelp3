@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="https://rawgit.com/jasondavies/d3-cloud/master/build/d3.layout.cloud.js"></script>
+    
+
+<head> 
+    <style>
+        svg{
+            padding-left: 200px;
+            padding-top: 200px;
+        }
+    </style>
+    
+</head>
+<body>
+
+</body>
+
+<script>
+
+var color = d3.scale.linear()
+            .domain([0,1,2,3,4,5,6,10,15,20,100])
+            .range(["#ddd", "#ccc", "#bbb", "#aaa", "#999", "#888", "#777", "#666", "#555", "#444", "#333", "#222"]);
+
+var dataWords = [];
+        d3.csv("word_sentiment_freq.csv", function(error,result) {
+            dataWords = result;
+            getData(dataWords)
+            
+        
+        function getData(dataNumbers) {
+            var business = "--0ZoBTQWQra1FxD4rBWmg";
+            console.log(business)
+            d3.csv("business_words.csv", function(error,result) {
+                dataBiz = result;
+                
+                var BusinessWords = dataBiz.filter(function(d){
+                    return d.business_id == business;
+                });
+                
+                //clean up text from bix record
+                BusinessWords = BusinessWords[0].text;
+                BusinessWords = BusinessWords.split("[");
+                BusinessWords = BusinessWords[1].split("]");
+                BusinessWords = BusinessWords[0].split(",");     
+                
+                //number of unique words in the tips
+                var numWords = BusinessWords.length;
+                var text = []
+                for (var i = 0; i < numWords; i++) {
+                    word = BusinessWords[i]
+                    word = word.replace(/['"]+/g, '');  //cleaning
+                    word = word.trimLeft();
+                    
+                    var wordData = dataWords.filter(function(d){    
+                        return d.Word == word;
+                    });
+                    wordData = wordData[0];
+                    //console.log(wordData);
+                    
+                    text.push({"text":wordData.Word, "size": 16});
+                    };
+            console.log(text[0]);    
+                
+            var SizeScale = d3.scale.linear()
+            .range([8,32]),
+        sizeValue = function(d){ return d.size;},
+        sizeMap = function(d){return SizeScale(sizeValue(d))};       
+        
+            d3.layout.cloud().size([600,600])  
+            .words(text)
+            .rotate(0).fontSize(16).on("end",draw).start();
+            
+            
+            function draw(words){
+                
+                d3.select("body").append("svg")
+                .attr("width",700)
+                .attr("height",700)
+                .attr("class","wordcloud")
+                .append("g")
+                .attr("trasnform","translate(700,700)")
+                .selectAll("Word")
+                .data(words)
+                .enter().append("text")
+                .style("font-size", 16)
+                .style("fill",function(d,i){color(i)})
+                .attr("transform", function(d){
+                    return "translate(" +[d.x, d.y]+ ")rotate ("+ d.rotate + ")";
+                })
+                .text(function(d){return d.text;});
+            }
+            
+        });
+            
+            
+    }
+        });        
+    
+</script>
+</html>
